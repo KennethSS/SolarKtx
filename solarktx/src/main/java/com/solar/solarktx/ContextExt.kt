@@ -7,12 +7,14 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.drawable.Drawable
+import android.location.LocationManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import android.text.Html
 import android.text.Spanned
 import android.view.LayoutInflater
@@ -51,10 +53,10 @@ fun Context.toast(id: Int, length: Int = Toast.LENGTH_SHORT) {
 fun Context.toast(msg: String, length: Int = Toast.LENGTH_SHORT) {
     try {
         if (isOnMainThread()) {
-            Toast.makeText(applicationContext, msg, length).show()
+            Toast.makeText(this, msg, length).show()
         } else {
             Handler(Looper.getMainLooper()).post {
-                Toast.makeText(applicationContext, msg, length).show()
+                Toast.makeText(this, msg, length).show()
             }
         }
     } catch (e: Exception) { }
@@ -78,6 +80,17 @@ fun Context.goToPlayStore() {
         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(marketUri + appPackageName)))
     } catch (anfe: android.content.ActivityNotFoundException) {
         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(playStoreUri + appPackageName)))
+    }
+}
+
+fun Context.goToNotificationSetting(notificationChannelId: String) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        startActivity( Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).apply {
+            putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+            putExtra(Settings.EXTRA_CHANNEL_ID, notificationChannelId)
+        })
+    } else {
+        toast("버전이 너무 낮습니다.")
     }
 }
 
@@ -156,3 +169,45 @@ fun Context.showAlertDialog(title: String,
         create().show()
     }
 }
+
+fun Context.isGranted(permission: String): Boolean =
+    ActivityCompat.checkSelfPermission(this, permission) == PermissionChecker.PERMISSION_GRANTED
+
+fun Context.isGpsEnabled(): Boolean =
+    (getSystemService(Context.LOCATION_SERVICE) as LocationManager).isProviderEnabled(LocationManager.GPS_PROVIDER)
+
+fun Context.showDialog(title: Any? = null,
+                       msg: Any,
+                       cancelable: Boolean = true,
+                       positive: Any = "확인",
+                       negative: Any = "취소",
+                       positiveClick: (DialogInterface, Int) -> Unit,
+                       negativeClick: (DialogInterface, Int) -> Unit = { _, _ -> } ) {
+    val builder = AlertDialog.Builder(this).apply {
+        setCancelable(cancelable)
+    }
+
+    when(title) {
+        is String -> builder.setTitle(title)
+        is Int -> builder.setTitle(title)
+    }
+
+    when(msg) {
+        is String -> builder.setMessage(msg)
+        is Int -> builder.setMessage(msg)
+    }
+
+    when(positive) {
+        is String -> builder.setPositiveButton(positive, positiveClick)
+        is Int -> builder.setPositiveButton(positive, positiveClick)
+    }
+
+    when(negative) {
+        is String -> builder.setNegativeButton(negative, negativeClick)
+        is Int -> builder.setNegativeButton(negative, negativeClick)
+    }
+
+    builder.create()
+    builder.show()
+}
+
