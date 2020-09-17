@@ -2,6 +2,8 @@ package com.solar.solarktx
 
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.os.Build
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
 import android.view.animation.AlphaAnimation
@@ -28,6 +30,13 @@ fun View.toBitmap(): Bitmap {
     val bitmap = Bitmap.createBitmap(measuredWidth, measuredHeight, Bitmap.Config.ARGB_8888)
     draw(Canvas(bitmap))
     return bitmap
+}
+
+fun View.enableRippleEffect() {
+    context.theme.resolveAttribute(
+        android.R.attr.selectableItemBackground,
+        TypedValue(),
+        true)
 }
 
 @MainThread

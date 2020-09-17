@@ -40,7 +40,7 @@ fun <T> Observable<T>.observable(state: MutableLiveData<NetworkState<T>>) =
             { state.value = NetworkState.Error(it) }
         )
 
-fun <T> Single<T>.single(state: MutableLiveData<NetworkState<T>>) =
+fun <T> Single<T>.singleNetwork(state: MutableLiveData<NetworkState<T>>) =
         subscribeOn(Schedulers.io())
                 .doAfterTerminate { state.value = NetworkState.Init() }
                 .doOnSubscribe { state.value = NetworkState.Loading() }
