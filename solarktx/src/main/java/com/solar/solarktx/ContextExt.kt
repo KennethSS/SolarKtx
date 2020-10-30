@@ -155,18 +155,20 @@ fun Context.dpToPx(dp: Int): Int {
     return (dp * Resources.getSystem().displayMetrics.density).toInt()
 }
 
-fun Context.showAlertDialog(title: String,
-                            msg: String,
-                            positiveText: String = "확인",
-                            negativeText: String = "닫기",
-                            positive: DialogInterface.OnClickListener) {
+fun Context.showAlertDialog(title: String = "",
+                            msg: String = "",
+                            positiveText: String = getString(android.R.string.ok),
+                            negativeText: String = getString(android.R.string.cancel),
+                            positive: DialogInterface.OnClickListener,
+                            cancelable: Boolean = true) {
     AlertDialog.Builder(ContextThemeWrapper(this, android.R.style.Theme_DeviceDefault_Light)).apply {
-        setTitle(title)
-        setPositiveButton("확인", positive)
-        setNegativeButton("취소", null)
-        setMessage(msg)
-        setCancelable(true)
-        create().show()
+        if (title.isNotEmpty()) setTitle(title)
+        if (positiveText.isNotEmpty()) setPositiveButton(positiveText, positive)
+        if (negativeText.isNotEmpty()) setNegativeButton(negativeText, null)
+        if (msg.isNotEmpty()) setMessage(msg)
+        setCancelable(cancelable)
+        create()
+        show()
     }
 }
 
@@ -211,3 +213,6 @@ fun Context.showDialog(title: Any? = null,
     builder.show()
 }
 
+fun Context.dimenToInt(id: Int): Int {
+    return resources.getDimension(id).toInt()
+}
