@@ -28,26 +28,10 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
 import com.google.android.material.snackbar.Snackbar
 
-fun Context.getJsonFromAsset(name: String): String {
-    val inputStream = resources.assets.open(name)
-    return inputStream.bufferedReader().use { it.readText() }
-}
-
+/** Widget **/
 fun Context.toast(msg: Any, length: Int = Toast.LENGTH_SHORT) {
     if(msg is String) toast(msg)
     else if (msg is Int) toast(getString(msg, length))
-}
-
-fun Context.isLongResolution(): Boolean {
-    val width = resources.displayMetrics.widthPixels.toFloat()
-    val height = resources.displayMetrics.heightPixels.toFloat()
-
-    //(displayMetrics.heightPixels / 16) * 10 > displayMetrics.widthPixels
-    return (height / width) > 1.8979
-}
-
-fun Context.toast(id: Int, length: Int = Toast.LENGTH_SHORT) {
-    toast(getString(id), length)
 }
 
 fun Context.toast(msg: String, length: Int = Toast.LENGTH_SHORT) {
@@ -62,15 +46,12 @@ fun Context.toast(msg: String, length: Int = Toast.LENGTH_SHORT) {
     } catch (e: Exception) { }
 }
 
-fun Context.isInstallApp(pkgName: String): Boolean {
-    return try {
-        packageManager.getPackageInfo(pkgName, PackageManager.GET_ACTIVITIES)
-        true
-    } catch(e: PackageManager.NameNotFoundException) {
-        false
-    }
+fun Snackbar.action(action: String, color: Int? = null, listener: (View) -> Unit) {
+    setAction(action, listener)
+    color?.let { setActionTextColor(androidx.core.content.ContextCompat.getColor(context, color)) }
 }
 
+/** Intent **/
 fun Context.goToPlayStore() {
     val appPackageName = packageName
     val marketUri = "market://details?id="
@@ -83,6 +64,35 @@ fun Context.goToPlayStore() {
     }
 }
 
+/** isCheck **/
+fun Context.isInstallApp(pkgName: String): Boolean {
+    return try {
+        packageManager.getPackageInfo(pkgName, PackageManager.GET_ACTIVITIES)
+        true
+    } catch(e: PackageManager.NameNotFoundException) {
+        false
+    }
+}
+
+fun Context.getJsonFromAsset(name: String): String {
+    val inputStream = resources.assets.open(name)
+    return inputStream.bufferedReader().use { it.readText() }
+}
+
+fun Context.isLongResolution(): Boolean {
+    val width = resources.displayMetrics.widthPixels.toFloat()
+    val height = resources.displayMetrics.heightPixels.toFloat()
+
+    //(displayMetrics.heightPixels / 16) * 10 > displayMetrics.widthPixels
+    return (height / width) > 1.8979
+}
+
+
+
+
+
+
+
 fun Context.goToNotificationSetting(notificationChannelId: String) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         startActivity( Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).apply {
@@ -94,11 +104,10 @@ fun Context.goToNotificationSetting(notificationChannelId: String) {
     }
 }
 
-fun Snackbar.action(action: String, color: Int? = null, listener: (View) -> Unit) {
-    setAction(action, listener)
-    color?.let { setActionTextColor(androidx.core.content.ContextCompat.getColor(context, color)) }
-}
 
+
+
+/** Resource **/
 fun Context.colorRes(res: Int): Int {
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         resources.getColor(res, null)
@@ -106,6 +115,13 @@ fun Context.colorRes(res: Int): Int {
         resources.getColor(res)
     }
 }
+
+fun Context.drawable(resId: Int): Drawable? =
+    ContextCompat.getDrawable(this, resId)
+
+fun Context.dimenToInt(id: Int): Int =
+    resources.getDimension(id).toInt()
+
 
 fun Context.inflater(): LayoutInflater =
     (getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater)
@@ -120,8 +136,7 @@ fun Context.isNetworkConnect(): Boolean {
     return isConnected
 }
 
-fun Context.drawable(resId: Int): Drawable? =
-    ContextCompat.getDrawable(this, resId)
+
 
 
 fun Context.getHtmlVariable(res: Int, vararg: Any): Spanned {
@@ -155,6 +170,16 @@ fun Context.dpToPx(dp: Int): Int {
     return (dp * Resources.getSystem().displayMetrics.density).toInt()
 }
 
+
+
+/** Permission **/
+fun Context.isGranted(permission: String): Boolean =
+    ActivityCompat.checkSelfPermission(this, permission) == PermissionChecker.PERMISSION_GRANTED
+
+fun Context.isGpsEnabled(): Boolean =
+    (getSystemService(Context.LOCATION_SERVICE) as LocationManager).isProviderEnabled(LocationManager.GPS_PROVIDER)
+
+/** Dialog **/
 fun Context.showAlertDialog(title: String = "",
                             msg: String = "",
                             positiveText: String = getString(android.R.string.ok),
@@ -171,12 +196,6 @@ fun Context.showAlertDialog(title: String = "",
         show()
     }
 }
-
-fun Context.isGranted(permission: String): Boolean =
-    ActivityCompat.checkSelfPermission(this, permission) == PermissionChecker.PERMISSION_GRANTED
-
-fun Context.isGpsEnabled(): Boolean =
-    (getSystemService(Context.LOCATION_SERVICE) as LocationManager).isProviderEnabled(LocationManager.GPS_PROVIDER)
 
 fun Context.showDialog(title: Any? = null,
                        msg: Any,
@@ -213,6 +232,21 @@ fun Context.showDialog(title: Any? = null,
     builder.show()
 }
 
-fun Context.dimenToInt(id: Int): Int {
-    return resources.getDimension(id).toInt()
+
+fun Context.showAppNotificationSettings() {
+    val intent = Intent()
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        intent.action = Settings.ACTION_APP_NOTIFICATION_SETTINGS
+        intent.putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+        intent.action = "android.settings.APP_NOTIFICATION_SETTINGS"
+        intent.putExtra("app_package", packageName)
+        intent.putExtra("app_uid", applicationInfo.uid)
+    } else {
+        intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+        intent.addCategory(Intent.CATEGORY_DEFAULT)
+        intent.data = Uri.parse("package:" + packageName)
+    }
+    startActivity(intent)
 }
+
